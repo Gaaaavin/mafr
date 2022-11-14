@@ -1,0 +1,13 @@
+certifi==2020.4.5.1
+click==7.1.2
+dlib
+dotmap==1.3.14
+face-recognition==1.3.0
+face-recognition-models==0.3.0
+numpy
+opencv-python-headless
+Pillow
+tqdm==4.46.0
+wincertstore==0.2
+imutils==0.5.3
+requests==2.24.0
