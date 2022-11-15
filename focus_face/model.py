@@ -1,6 +1,6 @@
 from .iresnet import iresnet100
 import torch
-import torch.functional as F
+import torch.nn.functional as F
 from torch import nn
 from torch.nn.parameter import Parameter
 import numpy as np
@@ -15,7 +15,7 @@ class FocusFace(nn.Module):
         self.fc2 = nn.Linear(32, 2)
         self.relu = nn.ReLU()
 
-    def forward(self, x, label, inference=False):
+    def forward(self, x, label=None, inference=False):
         e1, e2 = self.model(x)
         y = None
         if not (inference):

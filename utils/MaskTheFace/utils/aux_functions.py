@@ -17,7 +17,7 @@ from tqdm import tqdm
 import bz2, shutil
 
 
-def download_dlib_model():
+def download_dlib_model(path):
     print_orderly("Get dlib model", 60)
     dlib_model_link = "http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2"
     print("Downloading dlib model...")
@@ -34,7 +34,7 @@ def download_dlib_model():
                 fd.write(chunk)
     print("Extracting dlib model...")
     with bz2.BZ2File(destination) as fr, open(
-        "dlib_models/shape_predictor_68_face_landmarks.dat", "wb"
+        path, "wb"
     ) as fw:
         shutil.copyfileobj(fr, fw)
     print("Saved: ", destination)
@@ -304,7 +304,7 @@ def mask_face(image, face_location, six_points, angle, args, type="surgical"):
     w = image.shape[0]
     h = image.shape[1]
     if not "empty" in type and not "inpaint" in type:
-        cfg = read_cfg(config_filename="masks/masks.cfg", mask_type=type, verbose=False)
+        cfg = read_cfg(config_filename="../utils/MaskTheFace/masks/masks.cfg", mask_type=type, verbose=False)
     else:
         if "left" in type:
             str = "surgical_blue_left"
@@ -312,7 +312,7 @@ def mask_face(image, face_location, six_points, angle, args, type="surgical"):
             str = "surgical_blue_right"
         else:
             str = "surgical_blue"
-        cfg = read_cfg(config_filename="masks/masks.cfg", mask_type=str, verbose=False)
+        cfg = read_cfg(config_filename="../utils/MaskTheFace/masks/masks.cfg", mask_type=str, verbose=False)
     img = cv2.imread(cfg.template, cv2.IMREAD_UNCHANGED)
 
     # Process the mask if necessary
@@ -651,7 +651,7 @@ def is_image(path):
         return False 
 
 
-def get_available_mask_types(config_filename="masks/masks.cfg"):
+def get_available_mask_types(config_filename="../utils/MaskTheFace/masks/masks.cfg"):
     parser = ConfigParser()
     parser.optionxform = str
     parser.read(config_filename)
