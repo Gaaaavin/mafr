@@ -1,6 +1,6 @@
 import os
 import dlib
-from MaskTheFace import mask_image, download_dlib_model
+from .MaskTheFace import mask_image, download_dlib_model
 
 
 def msk_init():

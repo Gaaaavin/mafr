@@ -40,7 +40,7 @@ parser.add_argument('--resume', action='store_true',
                     help='toggle resuming')
 parser.add_argument('--amp', default=False, action='store_true',
                     help="Toggle auto mixed precision")
-parser.add_argument("-v", "--verbose", default=False, action="store_ture", help="Display tqdm bar")
+parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Display tqdm bar")
 opt = parser.parse_args()
 
 

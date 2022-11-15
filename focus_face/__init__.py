@@ -1,4 +1,3 @@
-import iresnet
-import loader
-import metrics
-import model
+from .metrics import calculate_metrics
+from .model import FocusFace
+from .dataset import TrainDataset, EvalDataset

@@ -1,1 +1,1 @@
-from utils.aux_functions import *
+from .utils.aux_functions import *

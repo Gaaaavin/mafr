@@ -6,10 +6,10 @@ from configparser import ConfigParser
 import cv2, math, os
 from PIL import Image, ImageDraw
 from tqdm import tqdm
-from utils.read_cfg import read_cfg
-from utils.fit_ellipse import *
+from .read_cfg import read_cfg
+from .fit_ellipse import *
 import random
-from utils.create_mask import texture_the_mask, color_the_mask
+from .create_mask import texture_the_mask, color_the_mask
 from imutils import face_utils
 import requests
 from zipfile import ZipFile

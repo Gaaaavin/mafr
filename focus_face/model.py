@@ -1,4 +1,4 @@
-import iresnet
+from .iresnet import iresnet100
 import torch
 import torch.functional as F
 from torch import nn
@@ -9,7 +9,7 @@ import numpy as np
 class FocusFace(nn.Module):
     def __init__(self, identities=1000):
         super(FocusFace, self).__init__()
-        self.model = iresnet.iresnet100()
+        self.model = iresnet100()
         self.model.fc = EmbeddingHead(512, 32)
         self.fc = ArcMarginProduct(512, identities, s=64, m=0.5)  # m=0.35)
         self.fc2 = nn.Linear(32, 2)

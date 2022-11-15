@@ -1,1 +1,1 @@
-from add_mask import *
+from .add_mask import *
