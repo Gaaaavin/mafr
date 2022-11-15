@@ -133,6 +133,10 @@ data/
 *.sqf
 *.jpg
 
+# Misc
+*.dat
+*.pth
+
 # Slurm
 *.err
 *.out
