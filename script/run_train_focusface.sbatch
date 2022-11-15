@@ -7,8 +7,8 @@
 #SBATCH --job-name=focus
 #SBATCH --mail-type=END,FAILED
 #SBATCH --mail-user=xl3136@nyu.edu
-#SBATCH --output=dm_%j.out
-#SBATCH --error=dm_%j.err
+#SBATCH --output=focus_%j.out
+#SBATCH --error=focus_%j.err
 #SBATCH --gres=gpu:a100:1
 
 # Experiment name

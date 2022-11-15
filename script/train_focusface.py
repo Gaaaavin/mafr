@@ -56,7 +56,7 @@ mask_args.verbose = False
 mask_args.code, mask_args.pattern, mask_args.color = "", "", ""
 
 
-workers = min(16, multiprocessing.cpu_count())
+workers = min(8, multiprocessing.cpu_count())
 
 
 print("Loading dataset")
