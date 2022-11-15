@@ -129,5 +129,10 @@ dmypy.json
 .pyre/
 
 # Dataset
+data/
 *.sqf
 *.jpg
+
+# Slurm
+*.err
+*.out
