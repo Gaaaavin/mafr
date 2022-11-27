@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --time=04:00:00
-#SBATCH --mem=16GB
+#SBATCH --cpus-per-task=16
+#SBATCH --time=16:00:00
+#SBATCH --mem=32GB
 #SBATCH --job-name=focus
 #SBATCH --mail-type=END,FAILED
 #SBATCH --mail-user=xl3136@nyu.edu
@@ -14,7 +14,7 @@
 # Experiment name
 NAME=FocusFace
 # Epochs
-EPOCH=100
+EPOCH=500
 # Learning rate
 LR=1e-4
 # Training dataset
@@ -35,4 +35,4 @@ singularity exec --nv \
     --overlay /scratch/xl3136/mafr/data/WebFaceEval.sqf \
     /scratch/work/public/singularity/cuda11.6.124-cudnn8.4.0.27-devel-ubuntu20.04.4.sif \
     /bin/bash -c "source /ext3/env.sh; 
-    CUDA_VISIBLE_DEVICES=0 python train_focusface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS"
+    python train_focusface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS"
