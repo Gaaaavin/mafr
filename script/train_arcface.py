@@ -13,9 +13,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from pyeer.eer_info import get_eer_stats
-from torchmetrics import Accuracy
+from torchvision.models import resnet18, resnet34, resnet50, resnet101
 
-from ArcFace.resnet import *
 from ArcFace.model import *
 from ArcFace.dataset import TrainDataset, EvalDataset
 import utils
@@ -44,17 +43,14 @@ parser.add_argument('--amp', default=False, action='store_true',
                     help="Toggle auto mixed precision")
 parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Display tqdm bar")
 parser.add_argument('--backbone', default='resnet18', help='backbone network type')
-parser.add_argument('--pretrained', default=True, action='store_true', help='if pretrained resnet')
 parser.add_argument('--metric', default='arc_margin', help='embedding head of model')
+parser.add_argument('--easy_margin', default=False, action="store_true", help='margin type')
 opt = parser.parse_args()
 
 
 checkpoint_dir = os.path.join('../res',opt.name)
 if not os.path.exists(checkpoint_dir):
     os.mkdir(checkpoint_dir)
-
-
-print(opt.pretrained)
 
 mask_args = Namespace()
 mask_args.mask_type = "random"
@@ -63,8 +59,7 @@ mask_args.verbose = False
 mask_args.code, mask_args.pattern, mask_args.color = "", "", ""
 
 
-workers = min(16, multiprocessing.cpu_count())
-
+workers = min(20, multiprocessing.cpu_count())
 
 print("Loading dataset")
 train_dataset = TrainDataset(opt.train, mask_args)
@@ -77,17 +72,17 @@ identities = len(train_dataset.classes)
 print("Creating model")
 
 if opt.backbone == 'resnet18':
-    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet18', pretrained=True).to(device)
+    model = resnet18(weights="ResNet18_Weights.DEFAULT")
 elif opt.backbone == 'resnet34':
-    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet34', pretrained=True).to(device)
+    model = resnet18(weights="ResNet34_Weights.DEFAULT")
 elif opt.backbone == 'resnet50':
-    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet50', pretrained=True).to(device)
+    model = resnet18(weights="ResNet50_Weights.DEFAULT")
 elif opt.backbone == 'resnet101':
-    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet101', pretrained=True).to(device)
-elif opt.backbone == 'resent152':
-    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet152', pretrained=True).to(device)
+    model = resnet18(weights="ResNet101_Weights.DEFAULT")
 else:
     assert 0, "Model not supported"
+modules = list(model.children())[:-1]
+model = nn.Sequential(*modules).to(device)
 
 if opt.metric == 'add_margin':
     metric_fc = AddMarginProduct(512, identities, s=30, m=0.35).to(device)
@@ -97,11 +92,9 @@ elif opt.metric == 'sphere':
     metric_fc = SphereProduct(512, identities, m=4).to(device)
 else:
     metric_fc = nn.Linear(512, identities).to(device)
-else:
-    assert 0, "Metric not supported"
     
 
-optimizer = optim.Adam([model.parameters(), metric_fc.parameters()], lr=opt.lr)
+optimizer = optim.Adam([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=opt.lr)
 MSE = nn.MSELoss()
 CE = nn.CrossEntropyLoss()  
 if opt.amp:
@@ -114,6 +107,7 @@ if opt.resume:
     state = torch.load(resume_filename)
     starting_epoch = state["epoch"]
     model.load_state_dict(state["model"])
+    metric_fc.load_state_dict(state['fc'])
     optimizer.load_state_dict(state["optimizer"])
     if opt.amp:
         scaler.load_state_dict(state["scaler"])
@@ -130,7 +124,6 @@ for epoch in range(starting_epoch, opt.n_epochs):
     model.train()
 
     time_start = time.time()
-    print('With new loss function')
     for sample in tqdm(train_loader, disable=not opt.verbose):
         img_raw = sample['masked image'].to(device)
         img_msk = sample['raw image'].to(device)
@@ -142,8 +135,8 @@ for epoch in range(starting_epoch, opt.n_epochs):
         # print(id)
         # print(mask)
         
-        feature_raw = model(img_raw)
-        feature_msk = model(img_msk)
+        feature_raw = model(img_raw).squeeze()
+        feature_msk = model(img_msk).squeeze()
         
         output_raw = metric_fc(feature_raw, id)
         output_msk = metric_fc(feature_msk, id)
@@ -180,14 +173,14 @@ for epoch in range(starting_epoch, opt.n_epochs):
         positives = []
         negatives = []
         accuracy = []
-        acc_metric = Accuracy()
+        # acc_metric = Accuracy()
         for sample in tqdm(eval_loader, disable=not opt.verbose):
             img_anchor = sample["anchor"].to(device)
             img_other = sample["other"].to(device)
             label_same = sample["same"]
 
-            feature_anchor = model(img_anchor) 
-            feature_other = model(img_other) 
+            feature_anchor = model(img_anchor).squeeze()
+            feature_other = model(img_other).squeeze()
             
             feature_anchor = F.normalize(feature_anchor).unsqueeze(1)
             feature_other = F.normalize(feature_other).unsqueeze(1)
@@ -208,18 +201,18 @@ for epoch in range(starting_epoch, opt.n_epochs):
     if epoch % opt.log_interval == 0:
         print("FMR 100:", fmr100)
         print("AUC:", metrics.auc)
-        print("Other metrics:metrics.fmr0, metrics.fmr100, metrics.fmr1000, metrics.gmean, metrics.imean, metrics.auc")
-        print(metrics.fmr0, metrics.fmr100, metrics.fmr1000, metrics.gmean, metrics.imean, metrics.auc
-)
+        # print("Other metrics:metrics.fmr0, metrics.fmr100, metrics.fmr1000, metrics.gmean, metrics.imean, metrics.auc")
+        # print(metrics.fmr0, metrics.fmr100, metrics.fmr1000, metrics.gmean, metrics.imean, metrics.auc)
         print()
         
     # Save checkpoint
     if fmr100 < best_score:
         best_score = fmr100
         checkpoint = {"model": model.state_dict(),
-              "optimizer": optimizer.state_dict(),
-              "scaler": scaler.state_dict(),
-              "epoch": epoch
+            "fc": metric_fc.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scaler": scaler.state_dict(),
+            "epoch": epoch
         }
         torch.save(checkpoint, os.path.join(checkpoint_dir, "model_best.pth"))
         print('best model saved.')
