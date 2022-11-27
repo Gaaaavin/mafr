@@ -45,7 +45,7 @@ parser.add_argument('--amp', default=False, action='store_true',
 parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Display tqdm bar")
 parser.add_argument('--backbone', default='resnet18', help='backbone network type')
 parser.add_argument('--pretrained', default=True, action='store_true', help='if pretrained resnet')
-parser.add_argument('--metric', default='add_margin', help='embedding head of model')
+parser.add_argument('--metric', default='arc_margin', help='embedding head of model')
 opt = parser.parse_args()
 
 
@@ -63,7 +63,7 @@ mask_args.verbose = False
 mask_args.code, mask_args.pattern, mask_args.color = "", "", ""
 
 
-workers = min(8, multiprocessing.cpu_count())
+workers = min(16, multiprocessing.cpu_count())
 
 
 print("Loading dataset")
@@ -77,11 +77,17 @@ identities = len(train_dataset.classes)
 print("Creating model")
 
 if opt.backbone == 'resnet18':
-    model = resnet_face18(use_se=True).to(device)
+    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet18', pretrained=True).to(device)
 elif opt.backbone == 'resnet34':
-    model = resnet34().to(device)
+    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet34', pretrained=True).to(device)
 elif opt.backbone == 'resnet50':
-    model = resnet50().to(device)
+    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet50', pretrained=True).to(device)
+elif opt.backbone == 'resnet101':
+    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet101', pretrained=True).to(device)
+elif opt.backbone == 'resent152':
+    model = torch.hub.load('pytorch/vision:v0.14.0', 'resnet152', pretrained=True).to(device)
+else:
+    assert 0, "Model not supported"
 
 if opt.metric == 'add_margin':
     metric_fc = AddMarginProduct(512, identities, s=30, m=0.35).to(device)
@@ -91,9 +97,11 @@ elif opt.metric == 'sphere':
     metric_fc = SphereProduct(512, identities, m=4).to(device)
 else:
     metric_fc = nn.Linear(512, identities).to(device)
+else:
+    assert 0, "Metric not supported"
     
 
-optimizer = optim.Adam([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=opt.lr)
+optimizer = optim.Adam([model.parameters(), metric_fc.parameters()], lr=opt.lr)
 MSE = nn.MSELoss()
 CE = nn.CrossEntropyLoss()  
 if opt.amp:
@@ -140,12 +148,8 @@ for epoch in range(starting_epoch, opt.n_epochs):
         output_raw = metric_fc(feature_raw, id)
         output_msk = metric_fc(feature_msk, id)
 
-        # loss = CE(output_raw, id) + CE(output_raw, id)
-        print(MSE(feature_raw, feature_msk))
+        loss = CE(output_raw, id) + CE(output_raw, id)
         
-        loss = CE(output_raw, id) + CE(output_raw, id) + 3*MSE(feature_raw, feature_msk)
-        
-
         if opt.amp:
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
@@ -209,13 +213,13 @@ for epoch in range(starting_epoch, opt.n_epochs):
 )
         print()
         
-#     # Save checkpoint
-#     if fmr100 < best_score:
-#         best_score = fmr100
-#         checkpoint = {"model": model.state_dict(),
-#               "optimizer": optimizer.state_dict(),
-#               "scaler": scaler.state_dict(),
-#               "epoch": epoch
-#         }
-#         torch.save(checkpoint, os.path.join(checkpoint_dir, "model_best.pth"))
-#         print('best model saved.')
+    # Save checkpoint
+    if fmr100 < best_score:
+        best_score = fmr100
+        checkpoint = {"model": model.state_dict(),
+              "optimizer": optimizer.state_dict(),
+              "scaler": scaler.state_dict(),
+              "epoch": epoch
+        }
+        torch.save(checkpoint, os.path.join(checkpoint_dir, "model_best.pth"))
+        print('best model saved.')
