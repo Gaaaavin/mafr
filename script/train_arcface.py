@@ -141,7 +141,7 @@ for epoch in range(starting_epoch, opt.n_epochs):
         output_raw = metric_fc(feature_raw, id)
         output_msk = metric_fc(feature_msk, id)
 
-        loss = CE(output_raw, id) + CE(output_raw, id)
+        loss = CE(output_raw, id) + CE(output_msk, id)
         
         if opt.amp:
             scaler.scale(loss).backward()
@@ -182,10 +182,11 @@ for epoch in range(starting_epoch, opt.n_epochs):
             feature_anchor = model(img_anchor).squeeze()
             feature_other = model(img_other).squeeze()
             
-            feature_anchor = F.normalize(feature_anchor).unsqueeze(1)
-            feature_other = F.normalize(feature_other).unsqueeze(1)
+            # feature_anchor = F.normalize(feature_anchor).unsqueeze(1)
+            # feature_other = F.normalize(feature_other).unsqueeze(1)
             
-            dist = 1 - torch.cdist(feature_anchor, feature_other) / 2
+            # dist = 1 - torch.cdist(feature_anchor, feature_other) / 2
+            dist = F.cosine_similarity(feature_anchor, feature_other)
             
             
             for i in range(label_same.shape[0]):
