@@ -16,7 +16,7 @@ EVAL=../data/WebFaceEval
 LOG=1
 # Batch size
 BS=512
-# Pretrained
-pretraind=False
+# Loss function
+LOSS=arc_dist
 
-CUDA_VISIBLE_DEVICES=0 python train_arcface.py --name $NAME -E $EPOCH -t $TRAIN -m $MASK -e $EVAL --log_interval $LOG -B $BS --lr $LR
+CUDA_VISIBLE_DEVICES=0 python train_arcface.py --name $NAME -E $EPOCH -t $TRAIN -m $MASK -e $EVAL --log_interval $LOG -B $BS --lr $LR --loss $LOSS

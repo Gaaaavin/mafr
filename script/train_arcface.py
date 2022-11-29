@@ -17,6 +17,7 @@ from torchvision.models import resnet18, resnet34, resnet50, resnet101
 
 from ArcFace.model import *
 from ArcFace.dataset import TrainDataset, EvalDataset
+from ArcFace.focaloss import *
 import utils
 
 
@@ -47,6 +48,7 @@ parser.add_argument("-v", "--verbose", default=False, action="store_true", help=
 parser.add_argument('--backbone', default='resnet18', help='backbone network type')
 parser.add_argument('--metric', default='arc_margin', help='embedding head of model')
 parser.add_argument('--easy_margin', default=False, action="store_true", help='margin type')
+parser.add_argument('--loss', type=str, default='arcface', help="type of loss function")
 opt = parser.parse_args()
 
 
@@ -98,7 +100,8 @@ else:
 
 optimizer = optim.Adam([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=opt.lr)
 MSE = nn.MSELoss()
-CE = nn.CrossEntropyLoss()  
+CE = nn.CrossEntropyLoss()
+Focal = FocalLoss()
 if opt.amp:
     scaler = torch.cuda.amp.GradScaler()
 
@@ -145,7 +148,11 @@ for epoch in range(starting_epoch, opt.n_epochs):
         output_raw = metric_fc(feature_raw, id)
         output_msk = metric_fc(feature_msk, id)
 
-        loss = CE(output_raw, id) + CE(output_msk, id)
+        if opt.loss == 'arcface':
+            loss = CE(output_raw, id) + CE(output_msk, id)
+        elif opt.loss == 'arc_dist':
+            loss = Focal(output_raw, id) + Focal(output_msk, id) + \
+                (1 - F.cosine_similarity(output_raw, output_msk).mean())
         
         if opt.amp:
             scaler.scale(loss).backward()
