@@ -32,6 +32,8 @@ parser.add_argument('-E', '--n_epochs', type=int,
 parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
 parser.add_argument('-t', '--train', type=str,
                     default="/WebFace1k", help='training dataset')
+parser.add_argument('-m', '--mask', type=str,
+                    default="/WebFace1k_msk", help='masked training dataset')                   
 parser.add_argument('-e', '--eval', type=str, default=None,
                     help='evaluation dataset')
 parser.add_argument('-B', "--bs", type=int, default=480, help="Batch size")
@@ -59,10 +61,10 @@ mask_args.verbose = False
 mask_args.code, mask_args.pattern, mask_args.color = "", "", ""
 
 
-workers = min(20, multiprocessing.cpu_count())
+workers = min(8, multiprocessing.cpu_count())
 
 print("Loading dataset")
-train_dataset = TrainDataset(opt.train, mask_args)
+train_dataset = TrainDataset(opt.train, opt.mask, mask_args)
 eval_dataset = EvalDataset(opt.eval, mask_args)
 train_loader = DataLoader(train_dataset, batch_size=opt.bs, num_workers=workers, shuffle=True, pin_memory=True)
 eval_loader = DataLoader(eval_dataset, batch_size=opt.bs, num_workers=workers, shuffle=False, pin_memory=True)
@@ -116,7 +118,7 @@ else:
 
 
 print("Start training")
-best_score = 100
+best_score = 0.5
 training_losses = []
 for epoch in range(starting_epoch, opt.n_epochs):
     # Train
@@ -182,12 +184,11 @@ for epoch in range(starting_epoch, opt.n_epochs):
             feature_anchor = model(img_anchor).squeeze()
             feature_other = model(img_other).squeeze()
             
-            # feature_anchor = F.normalize(feature_anchor).unsqueeze(1)
-            # feature_other = F.normalize(feature_other).unsqueeze(1)
+            # feature_anchor = F.normalize(feature_anchor)
+            # feature_other = F.normalize(feature_other)
             
             # dist = 1 - torch.cdist(feature_anchor, feature_other) / 2
             dist = F.cosine_similarity(feature_anchor, feature_other)
-            
             
             for i in range(label_same.shape[0]):
                 if label_same[i] == 1:
@@ -198,22 +199,24 @@ for epoch in range(starting_epoch, opt.n_epochs):
         metrics = get_eer_stats(positives, negatives)
         # print(metrics)
     
-    fmr100 = metrics.fmr100
+    auc = metrics.auc
     if epoch % opt.log_interval == 0:
-        print("FMR 100:", fmr100)
-        print("AUC:", metrics.auc)
+        print("FMR 100:", metrics.fmr100)
+        print("AUC:", auc)
         # print("Other metrics:metrics.fmr0, metrics.fmr100, metrics.fmr1000, metrics.gmean, metrics.imean, metrics.auc")
         # print(metrics.fmr0, metrics.fmr100, metrics.fmr1000, metrics.gmean, metrics.imean, metrics.auc)
         print()
         
     # Save checkpoint
-    if fmr100 < best_score:
-        best_score = fmr100
+    if auc > best_score:
+        best_score = auc
         checkpoint = {"model": model.state_dict(),
             "fc": metric_fc.state_dict(),
             "optimizer": optimizer.state_dict(),
-            "scaler": scaler.state_dict(),
+            # "scaler": scaler.state_dict(),
             "epoch": epoch
         }
+        if opt.amp:
+            checkpoint["scaler"] = scaler.state_dict()
         torch.save(checkpoint, os.path.join(checkpoint_dir, "model_best.pth"))
         print('best model saved.')
