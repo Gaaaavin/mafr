@@ -123,12 +123,14 @@ training_losses = []
 for epoch in range(starting_epoch, opt.n_epochs):
     # Train
     epoch_loss = 0
+    raw_correct = 0
+    msk_correct = 0
     model.train()
 
     time_start = time.time()
     for sample in tqdm(train_loader, disable=not opt.verbose):
-        img_raw = sample['masked image'].to(device)
-        img_msk = sample['raw image'].to(device)
+        img_raw = sample['raw image'].to(device)
+        img_msk = sample['masked image'].to(device)
         id = sample['identity'].to(device)
         mask = sample['mask'].to(device)
          
@@ -158,6 +160,12 @@ for epoch in range(starting_epoch, opt.n_epochs):
             optimizer.step()
 
         epoch_loss += loss.item()
+
+        raw_class = output_raw.argmax(dim=1)
+        msk_class = output_msk.argmax(dim=1)
+        raw_correct += torch.sum(raw_class == id)
+        msk_correct += torch.sum(msk_class == id)
+
     
     time_end = time.time()
 
@@ -166,6 +174,9 @@ for epoch in range(starting_epoch, opt.n_epochs):
     if epoch % opt.log_interval == 0:        
         print("Training time: {:.2f}s".format(time_end - time_start))
         print('[{}/{}], training loss: {:.4f}'.format(epoch+1, opt.n_epochs, epoch_loss))
+        print("Trianing raw image accuracy: {:.4f}".format(raw_correct / len(train_dataset)))
+        print("Trianing mask image accuracy: {:.4f}".format(msk_correct / len(train_dataset)))
+
 
     # Evaluation
     print("Start evaluation")
@@ -192,12 +203,11 @@ for epoch in range(starting_epoch, opt.n_epochs):
             
             for i in range(label_same.shape[0]):
                 if label_same[i] == 1:
-                    positives.append(dist[i].squeeze().cpu().numpy())
+                    positives.append(dist[i].item())
                 else:
-                    negatives.append(dist[i].squeeze().cpu().numpy())
-
+                    negatives.append(dist[i].item())
+        
         metrics = get_eer_stats(positives, negatives)
-        # print(metrics)
     
     auc = metrics.auc
     if epoch % opt.log_interval == 0:
