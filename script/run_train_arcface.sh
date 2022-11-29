@@ -8,6 +8,8 @@ EPOCH=200
 LR=5e-4
 # Training dataset
 TRAIN=../data/WebFace1k
+# Masked training dataset
+MASK=../data/WebFace1k_msk
 # Evaluation dataset
 EVAL=../data/WebFaceEval
 # Log interval
@@ -17,4 +19,4 @@ BS=512
 # Pretrained
 pretraind=False
 
-CUDA_VISIBLE_DEVICES=0 python train_arcface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS --lr $LR
+CUDA_VISIBLE_DEVICES=0 python train_arcface.py --name $NAME -E $EPOCH -t $TRAIN -m $MASK -e $EVAL --log_interval $LOG -B $BS --lr $LR
