@@ -17,8 +17,9 @@ torch.manual_seed(42)
 
 
 class TrainDataset(ImageFolder):
-    def __init__(self, root: str, msk_args, transform=None):
+    def __init__(self, root: str, msk_root: str, msk_args, transform=None):
         super().__init__(root, transform)
+        self.msk_root = msk_root
         self.msk_args = msk_args
         if transform is None:
             # Deafault transform
@@ -29,10 +30,16 @@ class TrainDataset(ImageFolder):
             ])
 
     def __getitem__(self, index: int):
-        path, id_target = self.samples[index]
-        img_msk, img_raw, success = load_n_add_mask(path, self.msk_args)
-        img_msk = self.transform(img_msk)
-        img_raw = self.transform(img_raw)
+        raw_path, id_target = self.imgs[index]
+        img_path = raw_path.split()[-2:]
+        msk_path = os.path.join(self.msk_root, *img_path)
+        if os.path.exists(msk_path):
+            success = True
+        else:
+            success = False
+            msk_path = raw_path
+        img_raw = self.transform(self.loader(raw_path))
+        img_msk = self.transform(self.loader(msk_path))
         return {"masked image": img_msk, "raw image": img_raw, "identity": id_target, "mask": success}
 
 
@@ -61,7 +68,7 @@ class EvalDataset(ImageFolder):
             else:
                 self.label_same.append(0)
                 while j == anchor_id:
-                    j = np.random.choice(len(self))
+                    j = np.random.choice(len(self.classes))
             choices = os.listdir(os.path.join(root, self.classes[j]))
             other_path = os.path.join(root, self.classes[j], choices[np.random.choice(len(choices))])
 
@@ -70,9 +77,8 @@ class EvalDataset(ImageFolder):
             self.img_path.append((anchor_path, other_path))
 
 
-    def __len__(self):
-        return len(self.classes)
-
+    # def __len__(self):
+    #     return len(self.classes)
 
     def __getitem__(self, index):
         anchor_path, other_path = self.img_path[index]
