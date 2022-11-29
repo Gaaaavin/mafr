@@ -31,7 +31,7 @@ class TrainDataset(ImageFolder):
 
     def __getitem__(self, index: int):
         raw_path, id_target = self.imgs[index]
-        img_path = raw_path.split()[-2:]
+        img_path = raw_path.split('/')[-2:]
         msk_path = os.path.join(self.msk_root, *img_path)
         if os.path.exists(msk_path):
             success = True
