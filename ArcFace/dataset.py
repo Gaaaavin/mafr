@@ -19,7 +19,7 @@ torch.manual_seed(42)
 class TrainDataset(ImageFolder):
     def __init__(self, root: str, transform=None):
         super().__init__(root, transform)
-        self.msk_root = self.root + "_msk"
+        self.msk_root = self.root + "_masked"
         if transform is None:
             # Deafault transform
             self.transform = transforms.Compose([
@@ -45,7 +45,7 @@ class TrainDataset(ImageFolder):
 class EvalDataset(ImageFolder):
     def __init__(self, root: str, prob_msk=0.5, transform=None):
         super().__init__(root, transform)
-        self.msk_root = self.root + "_msk"
+        self.msk_root = self.root + "_masked"
         self.label_same = np.random.binomial(1, prob_msk, size=len(self))
         if transform is None:
             # Deafault transform
