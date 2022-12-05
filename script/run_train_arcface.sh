@@ -3,15 +3,13 @@
 # Experiment name
 NAME=ArcFace
 # Epochs
-EPOCH=200
+EPOCH=100
 # Learning rate
-LR=5e-4
+LR=0.0005
 # Training dataset
 TRAIN=../data/WebFace1k
-# Masked training dataset
-MASK=../data/WebFace1k_msk
 # Evaluation dataset
-EVAL=../data/WebFaceEval
+EVAL=../data/WebFace1k
 # Log interval
 LOG=1
 # Batch size
@@ -19,4 +17,4 @@ BS=512
 # Loss function
 LOSS=arc_dist
 
-CUDA_VISIBLE_DEVICES=0 python train_arcface.py --name $NAME -E $EPOCH -t $TRAIN -m $MASK -e $EVAL --log_interval $LOG -B $BS --lr $LR --loss $LOSS
+CUDA_VISIBLE_DEVICES=0 python train_arcface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS --lr $LR --loss $LOSS

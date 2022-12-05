@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
+from torchvision.models import resnet18, resnet50
 import math
 
 
@@ -155,3 +156,21 @@ class SphereProduct(nn.Module):
                + 'in_features=' + str(self.in_features) \
                + ', out_features=' + str(self.out_features) \
                + ', m=' + str(self.m) + ')'
+
+
+class ResNet(nn.Module):
+    def __init__(self, out_dim=512) -> None:
+        super().__init__()
+        self.model = resnet18(weights="ResNet18_Weights.DEFAULT")
+        modules = list(self.model.children())[:-1]
+        self.model = nn.Sequential(*modules)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear((512), out_dim)
+
+    def forward(self, x):
+        x = self.model(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+
+        return x
