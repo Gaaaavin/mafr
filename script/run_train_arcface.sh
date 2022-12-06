@@ -16,5 +16,7 @@ LOG=1
 BS=512
 # Loss function
 LOSS=arc_dist
+# Backbone
+BACKBONE=resnet50
 
-CUDA_VISIBLE_DEVICES=0 python train_arcface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS --lr $LR --loss $LOSS
+CUDA_VISIBLE_DEVICES=0 python train_arcface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS --lr $LR --loss $LOSS --backbone $BACKBONE

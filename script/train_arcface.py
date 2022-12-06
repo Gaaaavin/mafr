@@ -13,7 +13,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from pyeer.eer_info import get_eer_stats
-from torchvision.models import resnet18, resnet34, resnet50, resnet101
 
 from ArcFace.model import *
 from ArcFace.dataset import TrainDataset, EvalDataset, DataBaseSet
@@ -69,18 +68,7 @@ identities = len(train_dataset.classes)
 
 
 print("Creating model")
-if opt.backbone == 'resnet18':
-    model = ResNet(512).to(device)
-elif opt.backbone == 'resnet34':
-    model = resnet18(weights="ResNet34_Weights.DEFAULT")
-elif opt.backbone == 'resnet50':
-    model = resnet18(weights="ResNet50_Weights.DEFAULT")
-elif opt.backbone == 'resnet101':
-    model = resnet18(weights="ResNet101_Weights.DEFAULT")
-else:
-    assert 0, "Model not supported"
-# modules = list(model.children())[:-1]
-# model = nn.Sequential(*modules).to(device)
+model = ResNet(opt.backbone, 512).to(device)
 
 if opt.metric == 'add_margin':
     metric_fc = AddMarginProduct(512, identities, s=30, m=0.35).to(device)
