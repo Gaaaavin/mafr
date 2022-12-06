@@ -184,7 +184,7 @@ for epoch in range(starting_epoch, opt.n_epochs):
             mask = sample["mask"]
 
             feature_img = model(img)
-            cos_sim = F.linear(feature_img, feature_db)
+            cos_sim = F.linear(F.normalize(feature_img), F.normalize(feature_db))
             
             eval_class = cos_sim.argmax(dim=1)
             eval_correct += torch.sum(eval_class == identity)
