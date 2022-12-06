@@ -54,7 +54,7 @@ opt = parser.parse_args()
 checkpoint_dir = os.path.join('../res',opt.name)
 if not os.path.exists(checkpoint_dir):
     os.mkdir(checkpoint_dir)
-workers = min(8, multiprocessing.cpu_count())
+workers = min(16, multiprocessing.cpu_count())
 
 
 print("Loading dataset")
