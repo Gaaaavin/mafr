@@ -5,6 +5,7 @@ from tqdm import tqdm
 import multiprocessing
 import os
 import time
+import json
 from argparse import ArgumentParser, Namespace
 
 import torch
@@ -54,6 +55,8 @@ opt = parser.parse_args()
 checkpoint_dir = os.path.join('../res',opt.name)
 if not os.path.exists(checkpoint_dir):
     os.mkdir(checkpoint_dir)
+with open(os.path.join(checkpoint_dir, 'opt.json')) as f:
+    json.dump(opt, f, ident=4, sort_keys=True)
 workers = min(16, multiprocessing.cpu_count())
 
 
