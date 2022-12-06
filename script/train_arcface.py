@@ -55,8 +55,8 @@ opt = parser.parse_args()
 checkpoint_dir = os.path.join('../res',opt.name)
 if not os.path.exists(checkpoint_dir):
     os.mkdir(checkpoint_dir)
-with open(os.path.join(checkpoint_dir, 'opt.json')) as f:
-    json.dump(vars(opt), f, ident=4, sort_keys=True)
+with open(os.path.join(checkpoint_dir, 'opt.json'), 'wt') as f:
+    json.dump(vars(opt), f, indent=4, sort_keys=True)
 workers = min(16, multiprocessing.cpu_count())
 
 
@@ -161,8 +161,8 @@ for epoch in range(starting_epoch, opt.n_epochs):
 
     epoch_loss /= len(train_loader)
     training_losses.append(epoch_loss)
-    raw_acc.append(raw_correct / len(train_dataset))
-    msk_acc.append(msk_correct / len(train_dataset))
+    raw_acc.append(raw_correct.item() / len(train_dataset))
+    msk_acc.append(msk_correct.item() / len(train_dataset))
     if epoch % opt.log_interval == 0:        
         print("Training time: {:.2f}s".format(time_end - time_start))
         print('[{}/{}], training loss: {:.4f}'.format(epoch+1, opt.n_epochs, epoch_loss))
@@ -194,8 +194,8 @@ for epoch in range(starting_epoch, opt.n_epochs):
         print("Evaluation accuracy: {:.4f}".format(eval_acc[-1]))
         
     # Save checkpoint
-    if accuracy > best_acc:
-        best_acc = accuracy
+    if eval_acc[-1] > best_acc:
+        best_acc = eval_acc[-1]
         checkpoint = {"model": model.state_dict(),
             "fc": metric_fc.state_dict(),
             "optimizer": optimizer.state_dict(),
@@ -207,13 +207,12 @@ for epoch in range(starting_epoch, opt.n_epochs):
         torch.save(checkpoint, os.path.join(checkpoint_dir, "model_best.pth"))
         print('best model saved.')
 
-    training_losses.append
     results = {
         "loss": training_losses,
         "raw_accuracy": raw_acc, 
         "msk_accuracy": msk_acc,
         "eval_accuracy": eval_acc
     }
-    with open(os.path.join(checkpoint_dir, 'results.json')) as f:
-        json.dump(results, f, ident=4, sort_keys=True)
+    with open(os.path.join(checkpoint_dir, 'results.json'), 'wt') as f:
+        json.dump(results, f, indent=4, sort_keys=True)
     print()
