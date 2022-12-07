@@ -43,7 +43,7 @@ class TrainDataset(ImageFolder):
 
 
 class EvalDataset(ImageFolder):
-    def __init__(self, root: str, prob_msk=0.5, transform=None):
+    def __init__(self, root: str, prob_msk=1, transform=None):
         super().__init__(root, transform)
         self.msk_root = self.root + "_masked"
         self.label_same = np.random.binomial(1, prob_msk, size=len(self))
@@ -79,7 +79,6 @@ class DataBaseSet(ImageFolder):
             # Deafault transform
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ])
 
