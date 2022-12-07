@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
+from torchvision.models import resnet18, resnet34, resnet50, resnet101
 import math
 
 
@@ -155,3 +156,30 @@ class SphereProduct(nn.Module):
                + 'in_features=' + str(self.in_features) \
                + ', out_features=' + str(self.out_features) \
                + ', m=' + str(self.m) + ')'
+
+
+class ResNet(nn.Module):
+    def __init__(self, backbone="resnet18", out_dim=512) -> None:
+        super().__init__()
+        if backbone == 'resnet18':
+            self.model = resnet18(weights="ResNet18_Weights.DEFAULT")
+        elif backbone == 'resnet34':
+            self.model = resnet34(weights="ResNet34_Weights.DEFAULT")
+        elif backbone == 'resnet50':
+            self.model = resnet50(weights="ResNet50_Weights.DEFAULT")
+        elif backbone == 'resnet101':
+           self.model = resnet101(weights="ResNet101_Weights.DEFAULT")
+        else:
+            assert 0, "Model not supported"
+        modules = list(self.model.children())[:-1]
+        self.model = nn.Sequential(*modules)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear((512), out_dim)
+
+    def forward(self, x):
+        x = self.model(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+
+        return x

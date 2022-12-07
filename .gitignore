@@ -140,3 +140,7 @@ data/
 # Slurm
 *.err
 *.out
+
+# Result
+*.json
+*.pdf

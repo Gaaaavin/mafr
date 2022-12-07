@@ -1,42 +1,44 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --time=01:00:00
-#SBATCH --mem=16GB
-#SBATCH --job-name=arc
-#SBATCH --mail-type=END,FAILED
-#SBATCH --mail-user=zs1542@nyu.edu
-#SBATCH --output=/scratch/zs1542/MAFR/output_scripts/arc_%j.out
-#SBATCH --error=/scratch/zs1542/MAFR/output_scripts/arc_%j.err
-#SBATCH --gres=gpu:rtx8000:1
-
-
+#SBATCH --cpus-per-task=16
+#SBATCH --time=12:00:00
+#SBATCH --mem=64GB
+#SBATCH --job-name=arcface
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=xl3136@nyu.edu
+#SBATCH --output=arc_%j.out
+#SBATCH --error=arc_%j.err
+#SBATCH --gres=gpu:a100:1
 
 # Experiment name
-NAME=ArcFace
+NAME=ArcFace_nodist
 # Epochs
 EPOCH=100
 # Learning rate
-LR=1e-4
+LR=0.0002
 # Training dataset
-TRAIN=/WebFace1k
+TRAIN=/WebFace30k
 # Evaluation dataset
-EVAL=/WebFaceEval
+EVAL=/WebFace1k
 # Log interval
 LOG=1
 # Batch size
-BS=100
-# Pretrained
-pretraind=False
+BS=640
+# Loss function
+LOSS=arcface
+# Backbone
+BACKBONE=resnet18
 
 
 module purge
-cd /scratch/zs1542/MAFR/script
+cd /scratch/xl3136/mafr/script
 singularity exec --nv \
-    --overlay /scratch/zs1542/my_env/focus_face.ext3:ro \
-    --overlay /scratch/zs1542/MAFR/dataset/WebFace1k.sqf \
-    --overlay /scratch/zs1542/MAFR/dataset/WebFaceEval.sqf \
+    --overlay /scratch/xl3136/environments/mafr.ext3:ro \
+    --overlay /scratch/xl3136/mafr/data"$TRAIN".sqf \
+    --overlay /scratch/xl3136/mafr/data"$TRAIN"_masked.sqf \
+    --overlay /scratch/xl3136/mafr/data"$EVAL".sqf \
+    --overlay /scratch/xl3136/mafr/data"$EVAL"_masked.sqf \
     /scratch/work/public/singularity/cuda11.6.124-cudnn8.4.0.27-devel-ubuntu20.04.4.sif \
     /bin/bash -c "source /ext3/env.sh; 
-    CUDA_VISIBLE_DEVICES=0 python train_arcface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS --pretrained $pretrained"
+    python train_arcface.py --amp --name $NAME -E $EPOCH -t $TRAIN -e $EVAL --log_interval $LOG -B $BS --lr $LR --loss $LOSS --backbone $BACKBONE"
