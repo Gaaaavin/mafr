@@ -9,8 +9,6 @@ import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
 
-from utils import load_n_add_mask
-
 
 np.random.seed(42)
 torch.manual_seed(42)

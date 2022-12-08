@@ -13,12 +13,11 @@ from torch import nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from pyeer.eer_info import get_eer_stats
+# from pyeer.eer_info import get_eer_stats
 
 from ArcFace.model import *
 from ArcFace.dataset import TrainDataset, EvalDataset, DataBaseSet
 from ArcFace.focaloss import *
-import utils
 
 
 torch.backends.cudnn.deterministic = True
