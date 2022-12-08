@@ -144,3 +144,6 @@ data/
 # Result
 *.json
 *.pdf
+
+# Mask
+/MaskTheFace
