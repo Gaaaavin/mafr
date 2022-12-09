@@ -13,12 +13,11 @@ from torch import nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from pyeer.eer_info import get_eer_stats
+# from pyeer.eer_info import get_eer_stats
 
 from ArcFace.model import *
 from ArcFace.dataset import TrainDataset, EvalDataset, DataBaseSet
 from ArcFace.focaloss import *
-import utils
 
 
 torch.backends.cudnn.deterministic = True
@@ -134,8 +133,8 @@ for epoch in range(starting_epoch, opt.n_epochs):
         if opt.loss == 'arcface':
             loss = CE(output_raw, id) + CE(output_msk, id)
         elif opt.loss == 'arc_dist':
-            loss = Focal(output_raw, id) + Focal(output_msk, id) + \
-                (1 - F.cosine_similarity(feature_raw, feature_msk).mean())
+            loss = CE(output_raw, id) + CE(output_msk, id) - \
+                0.1 * F.cosine_similarity(feature_raw, feature_msk).mean()
         
         if opt.amp:
             scaler.scale(loss).backward()

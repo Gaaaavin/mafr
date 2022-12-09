@@ -9,8 +9,6 @@ import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
 
-from utils import load_n_add_mask
-
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -43,7 +41,7 @@ class TrainDataset(ImageFolder):
 
 
 class EvalDataset(ImageFolder):
-    def __init__(self, root: str, prob_msk=0.5, transform=None):
+    def __init__(self, root: str, prob_msk=1, transform=None):
         super().__init__(root, transform)
         self.msk_root = self.root + "_masked"
         self.label_same = np.random.binomial(1, prob_msk, size=len(self))
@@ -51,6 +49,7 @@ class EvalDataset(ImageFolder):
             # Deafault transform
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
+                transforms.Resize(112),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
 
@@ -79,7 +78,7 @@ class DataBaseSet(ImageFolder):
             # Deafault transform
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(),
+                transforms.Resize(112),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ])
 
