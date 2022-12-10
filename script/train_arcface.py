@@ -101,16 +101,22 @@ if opt.resume:
     optimizer.load_state_dict(state["optimizer"])
     if opt.amp:
         scaler.load_state_dict(state["scaler"])
+
+    results = json.load(os.path.join(checkpoint_dir, "results.json"))
+    training_losses = results["loss"]
+    raw_acc = results["raw_accuracy"]
+    msk_acc = results["msk_accuracy"]
+    eval_acc = results["eval_accuracy"]
+    best_acc = min(eval_acc)
 else:
     starting_epoch = 0
-
+    best_acc = 0
+    training_losses = []
+    raw_acc = []
+    msk_acc = []
+    eval_acc = []
 
 print("Start training")
-best_acc = 0
-training_losses = []
-raw_acc = []
-msk_acc = []
-eval_acc = []
 for epoch in range(starting_epoch, opt.n_epochs):
     # Train
     epoch_loss = 0
