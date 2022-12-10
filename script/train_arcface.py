@@ -86,6 +86,7 @@ optimizer = optim.Adam([{'params': model.parameters()}, {'params': metric_fc.par
 MSE = nn.MSELoss()
 CE = nn.CrossEntropyLoss()
 Focal = FocalLoss()
+Dist = Distillation(m=0.75)
 if opt.amp:
     scaler = torch.cuda.amp.GradScaler()
 
@@ -134,7 +135,7 @@ for epoch in range(starting_epoch, opt.n_epochs):
             loss = CE(output_raw, id) + CE(output_msk, id)
         elif opt.loss == 'arc_dist':
             loss = CE(output_raw, id) + CE(output_msk, id) - \
-                0.1 * F.cosine_similarity(feature_raw, feature_msk).mean()
+                0.1 * Dist(output_raw, output_msk)
         
         if opt.amp:
             scaler.scale(loss).backward()

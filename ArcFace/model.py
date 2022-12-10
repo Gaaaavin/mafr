@@ -158,6 +158,37 @@ class SphereProduct(nn.Module):
                + ', m=' + str(self.m) + ')'
 
 
+class Distillation(nn.Module):
+    r"""Implement of large margin arc distance: :
+        Args:
+            in_features: size of each input sample
+            out_features: size of each output sample
+            s: norm of input feature
+            m: margin
+            cos(theta + m)
+        """
+    def __init__(self, m=0.50, easy_margin=False):
+        super().__init__()
+        self.m = m
+        self.easy_margin = easy_margin
+        self.cos_m = math.cos(m)
+        self.sin_m = math.sin(m)
+        self.th = math.cos(math.pi - m)
+        self.mm = math.sin(math.pi - m) * m
+
+    def forward(self, raw, msk):
+        # --------------------------- cos(theta) & phi(theta) ---------------------------
+        cosine = F.cosine_similarity(raw, msk)
+        sine = torch.sqrt((1.0 - torch.pow(cosine, 2)).clamp(0, 1))
+        phi = cosine * self.cos_m - sine * self.sin_m
+        if self.easy_margin:
+            phi = torch.where(cosine > 0, phi, cosine)
+        else:
+            phi = torch.where(cosine > self.th, phi, cosine - self.mm)
+        
+        return phi.mean()
+
+
 class ResNet(nn.Module):
     def __init__(self, backbone="resnet18", out_dim=512) -> None:
         super().__init__()
