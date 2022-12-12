@@ -49,7 +49,7 @@ class EvalDataset(ImageFolder):
             # Deafault transform
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Resize(112),
+                transforms.Resize([112, 122]),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
 
@@ -78,7 +78,7 @@ class DataBaseSet(ImageFolder):
             # Deafault transform
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Resize(112),
+                transforms.Resize([112, 122]),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ])
 

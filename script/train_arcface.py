@@ -70,12 +70,12 @@ identities = len(train_dataset.classes)
 
 
 print("Creating model")
-model = ResNet(opt.backbone, 512).to(device)
+model = ResNet(opt.backbone, 1024).to(device)
 
 if opt.metric == 'add_margin':
     metric_fc = AddMarginProduct(512, identities, s=30, m=0.35).to(device)
 elif opt.metric == 'arc_margin':
-    metric_fc = ArcMarginProduct(512, identities, s=30, m=0.5, easy_margin=opt.easy_margin).to(device)
+    metric_fc = ArcMarginProduct(1024, identities, s=30, m=0.5, easy_margin=opt.easy_margin).to(device)
 elif opt.metric == 'sphere':
     metric_fc = SphereProduct(512, identities, m=4).to(device)
 else:
@@ -102,7 +102,8 @@ if opt.resume:
     if opt.amp:
         scaler.load_state_dict(state["scaler"])
 
-    results = json.load(os.path.join(checkpoint_dir, "results.json"))
+    with open(os.path.join(checkpoint_dir, "results.json")) as f:
+        results = json.load(f)
     training_losses = results["loss"]
     raw_acc = results["raw_accuracy"]
     msk_acc = results["msk_accuracy"]
