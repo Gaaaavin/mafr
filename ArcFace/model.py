@@ -199,13 +199,23 @@ class ResNet(nn.Module):
         elif backbone == 'resnet50':
             self.model = resnet50(weights="ResNet50_Weights.DEFAULT")
         elif backbone == 'resnet101':
-           self.model = resnet101(weights="ResNet101_Weights.DEFAULT")
+            self.model = resnet101(weights="ResNet101_Weights.DEFAULT")
         else:
             assert 0, "Model not supported"
         modules = list(self.model.children())[:-1]
         self.model = nn.Sequential(*modules)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear((512), out_dim)
+        if backbone == 'resnet18':
+            self.fc = nn.Linear((512), out_dim)
+        elif backbone == 'resnet34':
+            self.fc = nn.Linear((512), out_dim)
+        elif backbone == 'resnet50':
+            self.fc = nn.Linear((2048), out_dim)
+        elif backbone == 'resnet101':
+            self.fc = nn.Linear((512), out_dim)
+        else:
+            assert 0, "Model not supported"
+        
 
     def forward(self, x):
         x = self.model(x)

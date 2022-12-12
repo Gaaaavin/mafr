@@ -48,6 +48,7 @@ parser.add_argument('--backbone', default='resnet18', help='backbone network typ
 parser.add_argument('--metric', default='arc_margin', help='embedding head of model')
 parser.add_argument('--easy_margin', default=False, action="store_true", help='margin type')
 parser.add_argument('--loss', type=str, default='arcface', help="type of loss function")
+parser.add_argument('--msk', type=float, default=0.5, help="portion of masked face")
 opt = parser.parse_args()
 
 
@@ -61,7 +62,7 @@ workers = min(16, multiprocessing.cpu_count())
 
 print("Loading dataset")
 train_dataset = TrainDataset(opt.train)
-eval_dataset = EvalDataset(opt.eval)
+eval_dataset = EvalDataset(opt.eval, opt.msk)
 db_set = DataBaseSet(opt.eval)
 train_loader = DataLoader(train_dataset, batch_size=opt.bs, num_workers=workers, shuffle=True)
 eval_loader = DataLoader(eval_dataset, batch_size=opt.bs, num_workers=workers, shuffle=False)
@@ -141,7 +142,7 @@ for epoch in range(starting_epoch, opt.n_epochs):
         if opt.loss == 'arcface':
             loss = CE(output_raw, id) + CE(output_msk, id)
         elif opt.loss == 'arc_dist':
-            loss = CE(output_raw, id) + CE(output_msk, id) - \
+            loss = Focal(output_raw, id) + Focal(output_msk, id) - \
                 0.1 * Dist(output_raw, output_msk)
         
         if opt.amp:
