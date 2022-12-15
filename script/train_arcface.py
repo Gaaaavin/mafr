@@ -50,6 +50,7 @@ parser.add_argument('--easy_margin', default=False, action="store_true", help='m
 parser.add_argument('--loss', type=str, default='arcface', help="type of loss function")
 parser.add_argument('--msk', type=float, default=0.5, help="portion of masked face")
 opt = parser.parse_args()
+print(vars(opt))
 
 
 checkpoint_dir = os.path.join('../res',opt.name)
@@ -87,7 +88,7 @@ optimizer = optim.Adam([{'params': model.parameters()}, {'params': metric_fc.par
 MSE = nn.MSELoss()
 CE = nn.CrossEntropyLoss()
 Focal = FocalLoss()
-Dist = Distillation(m=0.75)
+Dist = Distillation(m=0)
 if opt.amp:
     scaler = torch.cuda.amp.GradScaler()
 
@@ -143,7 +144,7 @@ for epoch in range(starting_epoch, opt.n_epochs):
             loss = CE(output_raw, id) + CE(output_msk, id)
         elif opt.loss == 'arc_dist':
             loss = Focal(output_raw, id) + Focal(output_msk, id) - \
-                0.1 * Dist(output_raw, output_msk)
+                0.2 * Dist(output_raw, output_msk)
         
         if opt.amp:
             scaler.scale(loss).backward()
