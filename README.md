@@ -1,2 +1,2 @@
 # mafr
-Mast-aware Face Recognition (Capstone project for Data Science)
+Mask-aware Face Recognition (Capstone project for Data Science)
